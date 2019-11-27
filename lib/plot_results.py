@@ -1,6 +1,7 @@
 from utils import measure_rmse
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+from yellowbrick.regressor import ResidualsPlot
 
 
 def OLS_plot_res(model, results, train, test=None, _Save=False) :
@@ -18,6 +19,10 @@ def OLS_plot_res(model, results, train, test=None, _Save=False) :
     return 0
 
 def NN_plot_res(model, history, train, test=None, _Save=False):
+    train_input, train_output = train[0], train[1]
+    if test :
+        test_input, test_output = test[0], test[1]
+
     gs = gridspec.GridSpec(4, 2)
     ax1 = plt.subplot(gs[:,0])
     ax2 = plt.subplot(gs[0,1])
@@ -26,10 +31,17 @@ def NN_plot_res(model, history, train, test=None, _Save=False):
     ax5 = plt.subplot(gs[3,1])
 
 
-    # Residualual plot
+    # Residual plot
+    # y_hat_vsplit = model.predict(history.validation_data)
+    # Residual_vsplit = 0
 
 
-    print(history.history.keys())
+    if test :
+        y_hat_test = model.predict(test[0])
+        Residual_test = y_hat_test - test[1]
+        rmse_test = measure_rmse(y_hat_test, test[1])
+        print('Root Mean Squared Error on test : {}'.format(rmse_test))
+
 
     ax4.plot(history.history['mean_absolute_error'])
     ax4.plot(history.history['val_mean_absolute_error'])

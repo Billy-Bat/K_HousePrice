@@ -42,7 +42,8 @@ if __name__ == '__main__' :
     OLS_plot_res(model, results, train=(Raw_input_Train, Target_Train), test=(Raw_input_test, Target_Test))
 
     #2# Classic NN Model
+
     model = load_NN(input_shape=len(Raw_input.columns), Output_shape=len(Target_Test.columns),
                     layers=4, n_units=100)
-    history = model.fit(Raw_input_Train, Target_Train, epochs=200, batch_size=32, validation_split=0.1)
-    NN_plot_res(model, history, train=(Raw_input_Train, Target_Train), test=None)
+    history = model.fit(Raw_input_Train, Target_Train, epochs=200, batch_size=32, validation_split=0.1, verbose=0)
+    NN_plot_res(model, history, train=(Raw_input_Train, Target_Train), test=(Raw_input_test, Target_Test))
