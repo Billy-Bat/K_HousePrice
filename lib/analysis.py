@@ -26,7 +26,7 @@ def normally_distributed(Data, alpha=0.05, _plot=True, _Save=True) :
     return res
 
 
-def corr_all(Pred, Data, alpha=0.05, disp=True):
+def corr_all(Pred, Data, alpha=0.05, disp=False):
     Correl = {}
     for i, col in enumerate(Data.columns) :
         first_index = Data[col].first_valid_index()

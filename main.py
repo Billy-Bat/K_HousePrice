@@ -1,20 +1,20 @@
 from lib.pd_load_data import *
 from lib.analysis import *
+from lib.utils import *
 import matplotlib.pyplot as plt
 
 
 if __name__ == '__main__' :
+    # load the Data and output
     Data = load_data('data/test.csv', index_col='Id')
-    # types =  {u'MSZoning': str, 'MSZoning':str, 'Street': str ,'Alley': str , 'LotShape':int , 'LandContour': int, 'Utilities': , 'LotConfig': , 'LandSlope': , 'Neighborhood': , 'Condition1': ,
-    #           'Condition2': , 'BldgType': , 'HouseStyle': , 'RoofStyle': , 'RoofMatl': , 'Exterior1st': , 'Exterior1st': , 'MasVnrType': , 'ExterQual': , 'ExterQual' :, 'ExterCond': ,
-    #           'Foundation': , 'BsmtQual':, 'BsmtCond': , 'BsmtExposure': , 'BsmtFinType1':, 'BsmtFinType2': , 'Heating': , 'HeatingQC': , 'CentralAir': , 'Electrical' :, 'KitchenQual': ,
-    #           'Functional': , 'FireplaceQu':, 'GarageType': , 'GarageFinish': , 'GarageQual': , 'PavedDrive':, 'PoolQC': , 'Fence':, 'MiscFeature': , 'SaleType': , 'SaleCondition': }
-    # Data = Data.astype(dtype = types)
-
-    # get the good types of data
-
-
-
     Pred = load_data('data/sample_submission.csv', index_col='Id')
-    # normally_distributed(Pred)
-    corr_all(Pred, Data)
+
+    # Correlation analysis (NOT MANDATORY)
+    features_nocorr = corr_all(Pred, Data)
+    Data.drop(features_nocorr, axis='columns', inplace=True)
+
+    # Normalize continuous values
+    continuous_col = Data.select_dtypes(include=(np.int64, int, float))
+    continuous_n, scaler = pd_normalize(continuous_col)
+    for col in continuous_n.columns :
+        Data[col] = continuous_n[col]
