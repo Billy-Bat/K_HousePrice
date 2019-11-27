@@ -1,5 +1,6 @@
 from lib.pd_load_data import *
 from lib.analysis import *
+import matplotlib.pyplot as plt
 
 
 if __name__ == '__main__' :
@@ -12,5 +13,8 @@ if __name__ == '__main__' :
 
     # get the good types of data
 
+
+
     Pred = load_data('data/sample_submission.csv', index_col='Id')
+    # normally_distributed(Pred)
     corr_all(Pred, Data)
