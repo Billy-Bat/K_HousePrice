@@ -12,6 +12,6 @@ matplotlib.rcParams["ytick.labelsize"] = 7
 matplotlib.rcParams["lines.linewidth"] = 0.5
 matplotlib.rcParams["figure.subplot.hspace"] = 0.5
 matplotlib.rcParams["axes.labelsize"] = 6
-matplotlib.rcParams["lines.markersize"] = 0.5
+matplotlib.rcParams["lines.markersize"] = 2
 matplotlib.rcParams['figure.figsize'] = 15, 7
 matplotlib.rcParams['savefig.format'] = 'png'
