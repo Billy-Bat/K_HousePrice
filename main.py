@@ -8,6 +8,8 @@ from lib.plot_results import *
 import matplotlib.pyplot as plt
 import statsmodels.api as sm
 import numpy as np
+from sklearn.model_selection import KFold
+
 
 import PltOptions
 
@@ -17,20 +19,17 @@ if __name__ == '__main__' :
     # load the Data and output
     Data = load_data('data/train.csv', index_col='Id')
     Target = pd.DataFrame(Data[u'SalePrice'], index=Data.index)
-    print(Target)
-    Target, lambdas = pd_boxcox(Target, rtrn_lambdas=True)
-    print(Target)
-    Target = pd_invboxcox(Target, lambdas)
-    print(Target)
-
+    Target, lambdas_target = pd_boxcox(Target, rtrn_lambdas=True)
     Data = Data.drop(columns=[u'SalePrice'])
-    # Correlation analysis (NOT MANDATORY)
-    # outlier_analysis('1stFlrSF', Target, Data, _Save=True)
+    missing_val_analysis(Target, Data, zeroes=False, _Save=True)
+
+
 
     # Apply Data Transformation continuous values
     continuous_df = Data.select_dtypes(include=numeric_dtypes)
-    # continuous_n, scaler = pd_normalize(continuous_df)
-    continuous_rs, scaler = pd_robustscale(continuous_df)
+    continuous_df = pd_fixskew(continuous_df,  exclude=('PoolArea', '3SsnPorch', 'LowQualFinSF', 'MiscVal', 'ScreenPorch')) # also standarzing the values
+    skew_analysis(continuous_df, _Save=False)
+    # continuous_rs, scaler = pd_robustscale(continuous_df)
     for col in continuous_rs.columns :
         Data[col] = continuous_rs[col]
     Target_rs, scaler = pd_robustscale(Target)

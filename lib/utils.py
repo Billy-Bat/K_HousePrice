@@ -3,6 +3,7 @@ from sklearn import preprocessing
 from sklearn.model_selection import KFold
 from sklearn.metrics import mean_squared_error
 from sklearn.linear_model import ElasticNetCV, LassoCV, RidgeCV
+from sklearn.preprocessing import power_transform
 import pandas as pd
 import numpy as np
 from scipy.stats import skew, boxcox
@@ -83,3 +84,27 @@ def pd_invboxcox(Data, lambdas) :
 
     Inv_BC_Data = pd.DataFrame(Inv_BC_cols, index=Data.index, columns=Data.columns)
     return Inv_BC_Data
+
+def pd_fixskew(Data, tresh=0.5, mthd='box-cox', exclude=[]):
+    """
+    if data contains zero the boxcox is applied with shift of epsilon
+    """
+    skew_res = Data.skew()
+    f_cols = np.empty(shape=Data.shape)
+    for i, col in enumerate(Data.columns) :
+        if col in exclude :
+            f_cols[:,i] = Data[col]
+        else :
+            array_col = np.reshape(Data[col].values, newshape=(len(Data[col]), 1))
+            try :
+                f_col = power_transform(array_col, method=mthd)
+                f_cols[:,i] = np.reshape(f_col, newshape=(len(Data[col],)))
+            except :
+                print('WARNING : {} failed on {} passing to yeo-johnson'.format(mthd, col))
+                f_col = power_transform(array_col, method='yeo-johnson')
+                f_cols[:,i] = np.reshape(f_col, newshape=(len(Data[col],)))
+
+    Data_skewFixed = pd.DataFrame(f_cols, index=Data.index, columns=Data.columns)
+    print(Data_skewFixed.skew())
+    # print(Data_skewFixed)
+    return Data_skewFixed

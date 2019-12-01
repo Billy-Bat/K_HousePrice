@@ -122,36 +122,52 @@ def corr_heatmap(Pred, Data, methods=('pearson', 'spearman', 'kendall'), _Save=T
 
     return 0
 
-def missing_val_analysis(Pred, Data, _Save=False) :
+def missing_val_analysis(Pred, Data, zeroes=False, _Save=False) :
     full = pd.concat((Pred, Data), axis=1, sort=True)
     col_with_na = {}
+    col_with_zeroes = {}
 
     for col in full.columns :
         if full[col].isna().any() :
             n = full[col].isna().sum(skipna=False)
             pct_col = float(n)/len(full[col])
             col_with_na[col] = pct_col
+        elif full[col].eq(0).any().any() and zeroes == True :
+            n = full[col].eq(0).sum(skipna=False)
+            pct_col = float(n)/len(full[col])
+            col_with_na[col] = pct_col
+            col_with_zeroes[col] = pct_col*100
+
 
     ordered = OrderedDict(sorted(col_with_na.items(), key=lambda item:np.min(item[1])))
     cols = list(ordered.keys())
-    values = [x*100 for x in ordered.values()]
+    pct_values = [x*100 for x in ordered.values()]
 
 
-    bar_plot = plt.bar(x=cols, height=values, align='center')
-    ax = plt.gca()
+    # bar_plot = plt.bar(x=cols, height=pct_values, align='center')
+    pltte = sns.color_palette("coolwarm", len(col_with_na))
+    ax = sns.barplot(cols, y=pct_values, palette=pltte)
+
     ax.set_title('Missing values (NaN)', fontdict={'weight': 'normal','size': 12})
     ax.set_xlabel('Column Labels', fontdict={'weight': 'normal','size': 12})
     ax.set_ylabel('missing values (in %)', fontdict={'weight': 'normal','size': 12})
+    if zeroes :
+        ax.set_title('Missing Values (including 0 values)')
+    else :
+        ax.set_title('Missing Values (NaN only)')
     plt.xticks(rotation=70)
 
     if _Save :
         fig = plt.gcf()
-        fig.savefig('vizu/MissingValues.png')
+        if zeroes :
+            fig.savefig('vizu/MissignValues_WZeroes.png')
+        else :
+            fig.savefig('vizu/MissignValues')
 
 
     plt.show()
 
-    return 1
+    return col_with_na
 
 def outlier_analysis(col, Pred, Data, tresh=0.99, _Save=False):
     data = pd.concat((Pred, Data[col]), axis=1, sort=True)
@@ -170,3 +186,28 @@ def outlier_analysis(col, Pred, Data, tresh=0.99, _Save=False):
     plt.show()
 
     return 0
+
+def skew_analysis(Data, trsh_line=0.5, order='asc', _Save=False) :
+    skew_res = Data.skew()
+    if order == 'asc' :
+        skew_res.sort_values(ascending=True, inplace=True)
+    elif order == 'desc':
+        skew_res.sort_values(ascending=False, inplace=True)
+
+    # br_plt = plt.bar(Data.columns, skew_res, align='center')
+    ax = sns.barplot(skew_res.index, y=skew_res.values, palette="Blues_d")
+    ax.axhline(y=trsh_line, linewidth=1, color='k', dashes=[30, 5, 10, 5], alpha=0.5)
+    ax.axhline(y=-trsh_line, linewidth=1, color='k', dashes=[30, 5, 10, 5], alpha=0.5)
+    plt.xticks(rotation=90)
+    ax.set_title('Skewness analysis treshold: {}'.format(trsh_line))
+
+    if _Save :
+        fig = plt.gcf()
+        fig.savefig('vizu/ContinuousData_skewness')
+
+    # df.index[df['BoolCol'] == True].tolist()
+    plt.show()
+    skewed = [index for index in skew_res.index if abs(skew_res[index])>trsh_line]
+
+
+    return skewed
