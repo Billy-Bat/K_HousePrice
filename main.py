@@ -7,33 +7,42 @@ from lib.plot_results import *
 
 import matplotlib.pyplot as plt
 import statsmodels.api as sm
+import numpy as np
 
 import PltOptions
 
-numeric_dtypes = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
+numeric_dtypes = ('int16', 'int32', 'int64', 'float16', 'float32', 'float64')
 
 if __name__ == '__main__' :
     # load the Data and output
     Data = load_data('data/train.csv', index_col='Id')
     Target = pd.DataFrame(Data[u'SalePrice'], index=Data.index)
+    print(Target)
+    Target, lambdas = pd_boxcox(Target, rtrn_lambdas=True)
+    print(Target)
+    Target = pd_invboxcox(Target, lambdas)
+    print(Target)
+
     Data = Data.drop(columns=[u'SalePrice'])
     # Correlation analysis (NOT MANDATORY)
-    outlier_analysis('TotalBsmtSF', Target, Data, _Save=True)
+    # outlier_analysis('1stFlrSF', Target, Data, _Save=True)
 
-    # Normalize continuous values
-    # continuous_df = Data.select_dtypes(include=(np.int64, int, float))
+    # Apply Data Transformation continuous values
+    continuous_df = Data.select_dtypes(include=numeric_dtypes)
     # continuous_n, scaler = pd_normalize(continuous_df)
-    # for col in continuous_n.columns :
-    #     Data[col] = continuous_n[col]
+    continuous_rs, scaler = pd_robustscale(continuous_df)
+    for col in continuous_rs.columns :
+        Data[col] = continuous_rs[col]
+    Target_rs, scaler = pd_robustscale(Target)
 
     # Deal With Caterorical Data (One Hot encoding)
-    # categorical_df = Data.select_dtypes(include=(object))
-    # Ohe_df = pd_one_hot_encoder(categorical_df)
-    # Data.drop(columns=categorical_df.columns, inplace=True)
-    # Raw_input = pd.concat((Data, Ohe_df), axis='columns')
-    #
-    #
-    # Target_Train, Target_Test = pd_split(Target, split=0.1)
+    categorical_df = Data.select_dtypes(include=(object))
+    Ohe_df = pd_one_hot_encoder(categorical_df)
+    Data.drop(columns=categorical_df.columns, inplace=True)
+    Raw_input = pd.concat((Data, Ohe_df), axis='columns')
+
+
+    Target_Train, Target_Test = pd_split(Target, split=0.1)
     # # Create the Network that best suits the data
     # #1# Linear Regression
     # Raw_input_Train, Raw_input_test = pd_split(Raw_input, split=0.1)

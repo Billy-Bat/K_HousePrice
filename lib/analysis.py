@@ -157,7 +157,6 @@ def outlier_analysis(col, Pred, Data, tresh=0.99, _Save=False):
     data = pd.concat((Pred, Data[col]), axis=1, sort=True)
     Pred_quant = Pred.quantile(tresh).values[0]
     Data_quant = Data[col].quantile(tresh)
-
     s1 = sns.jointplot(x=col, y=Pred.columns[0], data=data, kind = "reg")
     s1.ax_joint.plot([0, Data[col].max()*1.1], [Pred_quant, Pred_quant], linewidth=2)
     s1.ax_joint.plot([Data_quant, Data_quant], [0, Pred.max()*1.1], linewidth=2)

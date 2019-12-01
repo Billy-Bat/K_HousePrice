@@ -1,5 +1,6 @@
 from keras.models import Sequential
 from keras.layers import Dense, Activation, Flatten
+# from xgboost import XGBRegressor
 
 def load_NN(input_shape, Output_shape, layers, n_units=100) :
     model = Sequential()
@@ -13,3 +14,5 @@ def load_NN(input_shape, Output_shape, layers, n_units=100) :
     model.compile(loss='mean_absolute_error', optimizer='adam', metrics=['mean_absolute_error'])
 
     return model
+
+# def load

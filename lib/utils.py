@@ -1,8 +1,12 @@
 
 from sklearn import preprocessing
+from sklearn.model_selection import KFold
 from sklearn.metrics import mean_squared_error
+from sklearn.linear_model import ElasticNetCV, LassoCV, RidgeCV
 import pandas as pd
 import numpy as np
+from scipy.stats import skew, boxcox
+from scipy.special import inv_boxcox
 
 from math import floor, sqrt
 
@@ -25,6 +29,13 @@ def pd_normalize(Data) :
     data_n = pd.DataFrame(x_n, index=Data.index, columns=Data.columns)
     return data_n, scaler
 
+def pd_robustscale(Data) :
+    x = Data.values
+    scaler = preprocessing.RobustScaler()
+    x_rs = scaler.fit_transform(x)
+    data_rs = pd.DataFrame(x_rs, index=Data.index, columns=Data.columns)
+    return data_rs, scaler
+
 def pd_one_hot_encoder(Data) :
     cols = Data.columns
     Ohe_df = pd.DataFrame(index=Data.index, columns=None)
@@ -35,5 +46,40 @@ def pd_one_hot_encoder(Data) :
     return Ohe_df
 
 def measure_rmse(actual, predicted):
-    eps = sys.float_info.epsilon
-    return sqrt(mean_squared_error(actual, predicted+eps))
+    return sqrt(mean_squared_error(actual, predicted))
+
+def cv_rmse(model, X, y, kfolds):
+    rmse = np.sqrt(-cross_val_score(model, X, y,
+                                    scoring="neg_mean_squared_error",
+                                    cv=kfolds))
+    return (rmse)
+
+def pd_log1p(Data) :
+    return np.log1p(Data)
+
+def pd_expm1(Data) :
+    return np.expm1(Data)
+
+def pd_boxcox(Data, rtrn_lambdas=False) :
+    BC_cols = np.empty(Data.shape)
+    lambdas = []
+    for i, col in enumerate(Data.columns) :
+        bc_col = boxcox(Data[col])
+        BC_cols[:,i] = bc_col[0]
+        lambdas.append(bc_col[1])
+
+    BC_Data = pd.DataFrame(BC_cols, index=Data.index, columns=Data.columns)
+
+    if rtrn_lambdas :
+        return BC_Data, lambdas
+    else :
+        return BC_Data
+
+def pd_invboxcox(Data, lambdas) :
+    Inv_BC_cols = np.empty(Data.shape)
+    for i, col in enumerate(Data.columns):
+        inv_bc_col = inv_boxcox(Data[col], lambdas[i])
+        Inv_BC_cols[:,i] = inv_bc_col
+
+    Inv_BC_Data = pd.DataFrame(Inv_BC_cols, index=Data.index, columns=Data.columns)
+    return Inv_BC_Data
