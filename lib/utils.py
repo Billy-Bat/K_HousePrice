@@ -4,6 +4,8 @@ from sklearn.model_selection import KFold
 from sklearn.metrics import mean_squared_error
 from sklearn.linear_model import ElasticNetCV, LassoCV, RidgeCV
 from sklearn.preprocessing import power_transform, PowerTransformer, RobustScaler
+from sklearn.ensemble import IsolationForest
+
 import pandas as pd
 import numpy as np
 from scipy.stats import skew, boxcox
@@ -118,3 +120,22 @@ def df_toBinary(df, include=None):
         print('WARNING : changing all to binary')
 
     return Data_2B
+
+# def pd_outlier_detection(Data, Pred, include=None):
+#     ids = []
+#     if include :
+#         for col_name in include :
+#             data_col = np.reshape(np.array(Data.loc[:,include]), newshape=(len(Data[col_name]), len(include)))
+#             pred_col = np.reshape(np.array(Pred.values), newshape=(len(Data[col_name]), 1))
+#             pred_tool = IsolationForest(n_estimators=100, max_samples='auto', contamination=0.1,
+#             max_features=1.0, bootstrap=False, n_jobs=None, behaviour='old',
+#             random_state=42, verbose=0)
+#             labels = pred_tool.fit_predict(data_col, pred_col)
+#             indexs = np.where(labels == -1)
+#             print(indexs)
+#
+#     else :
+#         print('WARNING : The entire Dataframe was passed')
+#
+#
+#     return ids

@@ -175,29 +175,37 @@ def missing_val_analysis(Pred, Data, zeroes=False, _Save=False) :
 def outlier_analysis(Data, Pred, include=None, trsh=0.99, _Save=False):
     indexes = []
     if include == None :
-        for col in Data.columns :
-            data = pd.concat((Pred, Data[col]), axis=1, sort=True)
-            Pred_quant = Pred.quantile(trsh).values[0]
-            Data_quant = Data[col].quantile(trsh)
-            s1 = sns.jointplot(x=col, y=Pred.columns[0], data=data, kind='reg')
-            s1.ax_joint.plot([0, Data[col].max()*1.1], [Pred_quant, Pred_quant], linewidth=2)
-            s1.ax_joint.plot([Data_quant, Data_quant], [0, Pred.max()*1.1], linewidth=2)
-            s1.set_axis_labels(xlabel=col, ylabel=Pred.columns[0])
-            s1.annotate(stats.pearsonr)
-
-            plt.subplots_adjust(top=0.9)
-            s1.fig.suptitle('{} Outlier Analysis \n quantile at {}'.format(col, trsh))
-
-            if _Save :
-                fig = plt.gcf()
-                fig.savefig('vizu/outlier/{}_outlierAnalysis.png'.format(col))
-
-            plt.show()
+        iterable = Data.columns
     else :
-        print('WARNING : Include functionality not included')
+        iterable = include
+
+    for col in iterable :
+        data = pd.concat((Pred, Data[col]), axis=1, sort=True)
+        Pred_quant = Pred.quantile(trsh).values[0]
+        Data_quant = Data[col].quantile(trsh)
+        s1 = sns.jointplot(x=col, y=Pred.columns[0], data=data, kind='reg')
+        s1.ax_joint.plot([0, Data[col].max()*1.1], [Pred_quant, Pred_quant], linewidth=2)
+        s1.ax_joint.plot([Data_quant, Data_quant], [0, Pred.max()*1.1], linewidth=2)
+        s1.set_axis_labels(xlabel=col, ylabel=Pred.columns[0])
+        s1.annotate(stats.pearsonr)
+
+        plt.subplots_adjust(top=0.9)
+        s1.fig.suptitle('{} Outlier Analysis \n quantile at {}'.format(col, trsh))
+
+        pear_r = stats.pearsonr(data.iloc[:,0], data.iloc[:,1])[0]
+        if pear_r > 0.5 :
+            id_above = Data.loc[Data[col] > Data_quant].index
+            coresp = Pred.ix[id_above]
+            id_outlier = coresp.loc[Pred.iloc[:,0] < Pred_quant].index
+            print(id_outlier)
+
+        if _Save :
+            fig = plt.gcf()
+            fig.savefig('vizu/outlier/{}_outlierAnalysis.png'.format(col))
+
+        plt.show()
 
     return indexes
-
 
 def skew_analysis(Data, trsh_line=0.5, order='asc', _Save=False) :
     skew_res = Data.skew()
