@@ -173,6 +173,7 @@ def missing_val_analysis(Pred, Data, zeroes=False, _Save=False) :
     return col_with_na
 
 def outlier_analysis(Data, Pred, include=None, trsh=0.99, _Save=False):
+    indexes = []
     if include == None :
         for col in Data.columns :
             data = pd.concat((Pred, Data[col]), axis=1, sort=True)
@@ -183,33 +184,20 @@ def outlier_analysis(Data, Pred, include=None, trsh=0.99, _Save=False):
             s1.ax_joint.plot([Data_quant, Data_quant], [0, Pred.max()*1.1], linewidth=2)
             s1.set_axis_labels(xlabel=col, ylabel=Pred.columns[0])
             s1.annotate(stats.pearsonr)
+
+            plt.subplots_adjust(top=0.9)
+            s1.fig.suptitle('{} Outlier Analysis \n quantile at {}'.format(col, trsh))
+
             if _Save :
                 fig = plt.gcf()
-                fig.savefig('vizu/outlier/{}_outlierAnalysis.png')
+                fig.savefig('vizu/outlier/{}_outlierAnalysis.png'.format(col))
 
             plt.show()
     else :
         print('WARNING : Include functionality not included')
 
-    return 0
+    return indexes
 
-# def outlier_analysis(col, Pred, Data, tresh=0.99, _Save=False):
-#     data = pd.concat((Pred, Data[col]), axis=1, sort=True)
-#     Pred_quant = Pred.quantile(tresh).values[0]
-#     Data_quant = Data[col].quantile(tresh)
-#     s1 = sns.jointplot(x=col, y=Pred.columns[0], data=data, kind = "reg")
-#     s1.ax_joint.plot([0, Data[col].max()*1.1], [Pred_quant, Pred_quant], linewidth=2)
-#     s1.ax_joint.plot([Data_quant, Data_quant], [0, Pred.max()*1.1], linewidth=2)
-#     s1.set_axis_labels(xlabel=col, ylabel=Pred.columns[0])
-#     s1.annotate(stats.pearsonr)
-#
-#     if _Save :
-#         fig = plt.gcf()
-#         fig.savefig('vizu/OutlierAnalysis_{}.png'.format(col))
-#
-#     plt.show()
-#
-#     return 0
 
 def skew_analysis(Data, trsh_line=0.5, order='asc', _Save=False) :
     skew_res = Data.skew()
