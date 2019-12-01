@@ -3,7 +3,7 @@ from sklearn import preprocessing
 from sklearn.model_selection import KFold
 from sklearn.metrics import mean_squared_error
 from sklearn.linear_model import ElasticNetCV, LassoCV, RidgeCV
-from sklearn.preprocessing import power_transform
+from sklearn.preprocessing import power_transform, PowerTransformer, RobustScaler
 import pandas as pd
 import numpy as np
 from scipy.stats import skew, boxcox
@@ -32,7 +32,7 @@ def pd_normalize(Data) :
 
 def pd_robustscale(Data) :
     x = Data.values
-    scaler = preprocessing.RobustScaler()
+    scaler = RobustScaler()
     x_rs = scaler.fit_transform(x)
     data_rs = pd.DataFrame(x_rs, index=Data.index, columns=Data.columns)
     return data_rs, scaler
@@ -48,12 +48,6 @@ def pd_one_hot_encoder(Data) :
 
 def measure_rmse(actual, predicted):
     return sqrt(mean_squared_error(actual, predicted))
-
-def cv_rmse(model, X, y, kfolds):
-    rmse = np.sqrt(-cross_val_score(model, X, y,
-                                    scoring="neg_mean_squared_error",
-                                    cv=kfolds))
-    return (rmse)
 
 def pd_log1p(Data) :
     return np.log1p(Data)
@@ -85,25 +79,42 @@ def pd_invboxcox(Data, lambdas) :
     Inv_BC_Data = pd.DataFrame(Inv_BC_cols, index=Data.index, columns=Data.columns)
     return Inv_BC_Data
 
-def pd_fixskew(Data, tresh=0.5, mthd='box-cox', exclude=[]):
+def pd_fixskew(Data, tresh=0.5, mthd='box-cox', exclude=[], return_lambda=False):
     """
     if data contains zero the boxcox is applied with shift of epsilon
     """
     skew_res = Data.skew()
     f_cols = np.empty(shape=Data.shape)
+    transformer = []
     for i, col in enumerate(Data.columns) :
         if col in exclude :
             f_cols[:,i] = Data[col]
         else :
             array_col = np.reshape(Data[col].values, newshape=(len(Data[col]), 1))
             try :
-                f_col = power_transform(array_col, method=mthd)
+                trnsfm = PowerTransformer(method=mthd, standardize=True)
+                f_col = trnsfm.fit_transform(array_col)
                 f_cols[:,i] = np.reshape(f_col, newshape=(len(Data[col],)))
+                transformer.append(trnsfm)
             except :
                 print('WARNING : {} failed on {} passing to yeo-johnson'.format(mthd, col))
-                f_col = power_transform(array_col, method='yeo-johnson')
+                trnsfm = PowerTransformer(method='yeo-johnson', standardize=True)
+                f_col = trnsfm.fit_transform(array_col)
                 f_cols[:,i] = np.reshape(f_col, newshape=(len(Data[col],)))
+                transformer.append(trnsfm)
 
     Data_skewFixed = pd.DataFrame(f_cols, index=Data.index, columns=Data.columns)
-    # print(Data_skewFixed)
-    return Data_skewFixed
+    if return_lambda :
+        return Data_skewFixed, transformer
+    else :
+        return Data_skewFixed
+
+def df_toBinary(df, include=None):
+    Data_2B = df
+    if include :
+        for col in include :
+            Data_2B[col] = (df[col] > 0).astype(int)
+    else :
+        print('WARNING : changing all to binary')
+
+    return Data_2B
