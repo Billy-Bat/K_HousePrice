@@ -49,6 +49,9 @@ if __name__ == '__main__' :
     Ohe_df = pd_one_hot_encoder(categorical_df)
     Data.drop(columns=categorical_df.columns, inplace=True)
     Raw_input = pd.concat((Data, Ohe_df), axis='columns')
+    index = Raw_input.index[Raw_input.apply(np.isnan)]
+    print(index)
+
     # Raw_input.drop(axis=1, columns=['LotFrontage', 'MasVnrArea', 'GarageYrBlt'], inplace=True)
 
 
@@ -100,18 +103,3 @@ if __name__ == '__main__' :
     # # NN_model = load_NN(input_shape=Raw_input.shape[0], Output_shape=1, layers=5, n_units=100)
     # score = rmsle_cv(neural_network, Raw_input, Target_rs, n_folds=5)
     # print('NN score : {} ({})'.format(score.mean(), score.std()))
-
-    # # Create the Network that best suits the data
-    # #1# Linear Regression
-    # Raw_input_Train, Raw_input_test = pd_split(Raw_input, split=0.1)
-    # model = sm.OLS(Target_Train, Raw_input_Train)
-    # results = model.fit()
-    # OLS_plot_res(model, results, train=(Raw_input_Train, Target_Train), test=(Raw_input_test, Target_Test))
-    #
-    # #2# Classic NN Model
-    # model = load_NN(input_shape=len(Raw_input.columns), Output_shape=len(Target_Test.columns),
-    #                 layers=4, n_units=100)
-    # history = model.fit(Raw_input_Train, Target_Train, epochs=1000, batch_size=32, validation_split=0.1, verbose=0)
-    # NN_plot_res(model, history, train=(Raw_input_Train, Target_Train), test=(Raw_input_test, Target_Test))
-
-    #3# KNN Model
