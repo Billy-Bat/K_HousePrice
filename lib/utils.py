@@ -105,6 +105,5 @@ def pd_fixskew(Data, tresh=0.5, mthd='box-cox', exclude=[]):
                 f_cols[:,i] = np.reshape(f_col, newshape=(len(Data[col],)))
 
     Data_skewFixed = pd.DataFrame(f_cols, index=Data.index, columns=Data.columns)
-    print(Data_skewFixed.skew())
     # print(Data_skewFixed)
     return Data_skewFixed

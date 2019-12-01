@@ -21,18 +21,15 @@ if __name__ == '__main__' :
     Target = pd.DataFrame(Data[u'SalePrice'], index=Data.index)
     Target, lambdas_target = pd_boxcox(Target, rtrn_lambdas=True)
     Data = Data.drop(columns=[u'SalePrice'])
-    missing_val_analysis(Target, Data, zeroes=False, _Save=True)
-
-
 
     # Apply Data Transformation continuous values
     continuous_df = Data.select_dtypes(include=numeric_dtypes)
-    continuous_df = pd_fixskew(continuous_df,  exclude=('PoolArea', '3SsnPorch', 'LowQualFinSF', 'MiscVal', 'ScreenPorch')) # also standarzing the values
-    skew_analysis(continuous_df, _Save=False)
-    # continuous_rs, scaler = pd_robustscale(continuous_df)
-    for col in continuous_rs.columns :
-        Data[col] = continuous_rs[col]
-    Target_rs, scaler = pd_robustscale(Target)
+    pd_distribplot(continuous_df, _Save=True)
+    continuous_df = pd_fixskew(continuous_df,  exclude=('PoolArea', '3SsnPorch', 'LowQualFinSF', 'MiscVal', 'ScreenPorch', 'BsmtFullBath', 'BsmtHalfBath', 'FullBath', 'HalfBath', 'BedroomAbvGr', 'KitchenAbvGr')) # also standarzing the values
+    for col in continuous_df.columns :
+        Data[col] = continuous_df[col]
+    Target_rs = pd_fixskew(Target)
+    skew_analysis(Target_rs)
 
     # Deal With Caterorical Data (One Hot encoding)
     categorical_df = Data.select_dtypes(include=(object))

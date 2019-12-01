@@ -6,29 +6,35 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from collections import OrderedDict
 import scipy.stats as stats
+from math import ceil
 
 import matplotlib.gridspec as gridspec
 
-def normally_distributed(Data, alpha=0.05, _plot=True, _Save=True) :
-    stat, p = stats.normaltest(Data)
-    res = None
-    if p > alpha:
-       print('Sample follows Gaussiann, p = {}, alpha = {}'.format(p, alpha))
-       res = 1
-    else:
-       print('Sample does not follow Gaussian, p = {}, alpha = {}'.format(p, alpha))
-       res = 0
+def pd_distribplot(Data, include=None, _Save=False) :
+    if include == None :
+        for col in Data.columns :
+            n_NaN = Data[col].isna().any().sum()
+            col_data = Data[col].dropna()
+            ax0 = sns.distplot(col_data)
+            var = np.var(col_data)
+            mean = np.mean(col_data)
+            ax0.set_title(col + '\n variance: {}, mean: {}'.format(var, mean) + '\nTotal_Elements: {} NaN elements: {}'.format(len(col_data.index), n_NaN))
+            if _Save :
+                fig1 = plt.gcf()
+                fig1.savefig('vizu/distrib/{}_distrib.png'.format(col))
+            plt.show()
+    else :
+        for col in include :
+            ax = sns.distplot(Data[col])
+            ax.set_title(col)
+            if _Save :
+                fig1 = plt.gcf()
+                fig1.savefig('vizu/distrib/{}_distrib.png'.format(col))
+            plt.show()
 
-    if _plot :
-        ax = Data.plot.density()
-        ax.set_title('p = {}, alpha = {}'.format(p, alpha))
-
-    if _Save :
-        fig = plt.gcf()
-        fig.savefig('vizu/distributionPlot.png')
 
     plt.show()
-    return res
+    return 1
 
 def corr_all(Pred, Data, alpha=0.05, disp=False):
 #     Correl = {}
@@ -143,19 +149,16 @@ def missing_val_analysis(Pred, Data, zeroes=False, _Save=False) :
     cols = list(ordered.keys())
     pct_values = [x*100 for x in ordered.values()]
 
-
-    # bar_plot = plt.bar(x=cols, height=pct_values, align='center')
     pltte = sns.color_palette("coolwarm", len(col_with_na))
     ax = sns.barplot(cols, y=pct_values, palette=pltte)
-
     ax.set_title('Missing values (NaN)', fontdict={'weight': 'normal','size': 12})
     ax.set_xlabel('Column Labels', fontdict={'weight': 'normal','size': 12})
     ax.set_ylabel('missing values (in %)', fontdict={'weight': 'normal','size': 12})
+    plt.xticks(rotation=70)
     if zeroes :
         ax.set_title('Missing Values (including 0 values)')
     else :
         ax.set_title('Missing Values (NaN only)')
-    plt.xticks(rotation=70)
 
     if _Save :
         fig = plt.gcf()
