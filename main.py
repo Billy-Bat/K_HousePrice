@@ -15,9 +15,10 @@ import numpy as np
 
 
 ## # TEMP:
-from sklearn.linear_model import Lasso, ElasticNet
+from sklearn.linear_model import Lasso, ElasticNet, Ridge
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import RobustScaler
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.kernel_ridge import KernelRidge
 from sklearn.svm import SVR
 from sklearn.ensemble import GradientBoostingRegressor
@@ -33,11 +34,17 @@ if __name__ == '__main__' :
     # load the Data and output
     Data = load_data('data/train.csv', index_col='Id')
     Target = pd.DataFrame(Data[u'SalePrice'], index=Data.index)
-    Target, lambdas_target = pd_boxcox(Target, rtrn_lambdas=True)
     Data = Data.drop(columns=[u'SalePrice'])
+    Data.drop(['Utilities', 'Street', 'PoolQC',], axis=1)
+    Data['haspool'] = Data['PoolArea'].apply(lambda x: 1 if x > 0 else 0)
+
+    ###############################Feature Engineering#############################
+
 
     # Apply Data Transformation continuous values
     continuous_df = Data.select_dtypes(include=numeric_dtypes)
+    outlier_analysis(continuous_df, Target)
+
     continuous_df = df_toBinary(continuous_df, include=col_num2binary)
     continuous_df = pd_fixskew(continuous_df,  exclude=col_num2binary) # also standarzing the values
     for col in continuous_df.columns :
@@ -46,34 +53,51 @@ if __name__ == '__main__' :
 
     # Deal With Caterorical Data (One Hot encoding)
     categorical_df = Data.select_dtypes(include=(object))
+    categorical_df.fillna(value='None')
     Ohe_df = pd_one_hot_encoder(categorical_df)
     Data.drop(columns=categorical_df.columns, inplace=True)
     Raw_input = pd.concat((Data, Ohe_df), axis='columns')
-    index = Raw_input.index[Raw_input.apply(np.isnan)]
-    print(index)
-
-    # Raw_input.drop(axis=1, columns=['LotFrontage', 'MasVnrArea', 'GarageYrBlt'], inplace=True)
+    for col in Raw_input.columns :
+        if Raw_input[col].isna().any():
+            Raw_input[col] = Raw_input[col].fillna(value=0)
 
 
     ###############################Evaluate Models#############################
+    folds = 10
+    # Random Forest
+    Rdm_forest = RandomForestRegressor(n_estimators=48, criterion='mse', max_depth=None,
+                                       min_samples_split=3, min_samples_leaf=15, min_weight_fraction_leaf=0.0,
+                                       max_features='auto', max_leaf_nodes=None, min_impurity_decrease=0.0, min_impurity_split=None,
+                                       bootstrap=True, oob_score=False, n_jobs=None, random_state=10, verbose=0, warm_start=True)
+    score =  rmsle_cv(Rdm_forest, Raw_input, Target_rs, n_folds=folds)
+    print('Random Foreset score : {} ({})'.format(score.mean(), score.std()))
+
+
+
     # Lasso model
     lasso = make_pipeline(RobustScaler(), Lasso(alpha=0.0005, random_state=1))
-    score = rmsle_cv(lasso, Raw_input, Target_rs, n_folds=5)
+    score = rmsle_cv(lasso, Raw_input, Target_rs, n_folds=folds)
     print('lasso score : {} ({})'.format(score.mean(), score.std()))
 
     # ElasticNet
     ENet = make_pipeline(RobustScaler(), ElasticNet(alpha=0.0005, l1_ratio=.9, random_state=3))
-    score = rmsle_cv(ENet, Raw_input, Target_rs, n_folds=5)
+    score = rmsle_cv(ENet, Raw_input, Target_rs, n_folds=folds)
     print('ENet score : {} ({})'.format(score.mean(), score.std()))
 
     # SVR
     svr = make_pipeline(RobustScaler(), SVR(C= 20, epsilon= 0.008, gamma=0.0003,))
-    score = rmsle_cv(svr, Raw_input, Target_rs, n_folds=5)
+    score = rmsle_cv(svr, Raw_input, Target_rs, n_folds=folds)
     print('SVR score : {} ({})'.format(score.mean(), score.std()))
+
+    # Ridge
+    alphas_alt = [14.5, 14.6, 14.7, 14.8, 14.9, 15, 15.1, 15.2, 15.3, 15.4, 15.5]
+    ridge = make_pipeline(RobustScaler(), RidgeCV(alphas=alphas_alt))
+    score = rmsle_cv(ridge, Raw_input, Target_rs, n_folds=folds)
+    print('Ridge score : {} ({})'.format(score.mean(), score.std()))
 
     # KernelRidge
     KRR = KernelRidge(alpha=0.6, kernel='polynomial', degree=2, coef0=2.5)
-    score = rmsle_cv(KRR, Raw_input, Target_rs, n_folds=5)
+    score = rmsle_cv(KRR, Raw_input, Target_rs, n_folds=folds)
     print('KernelRidge score : {} ({})'.format(score.mean(), score.std()))
 
     # GradBoost
@@ -81,6 +105,7 @@ if __name__ == '__main__' :
                                    max_depth=4, max_features='sqrt',
                                    min_samples_leaf=15, min_samples_split=10,
                                    loss='huber', random_state =5)
+    score = rmsle_cv(GBoost, Raw_input, Target_rs, n_folds=folds)
     print('GradBoost score : {} ({})'.format(score.mean(), score.std()))
 
     # LGBMRegressor
@@ -90,7 +115,7 @@ if __name__ == '__main__' :
                               bagging_freq = 5, feature_fraction = 0.2319,
                               feature_fraction_seed=9, bagging_seed=9,
                               min_data_in_leaf =6, min_sum_hessian_in_leaf = 11)
-    score = rmsle_cv(lgb_model, Raw_input, Target_rs, n_folds=5)
+    score = rmsle_cv(lgb_model, Raw_input, Target_rs, n_folds=folds)
     print('LGBMRegressor score : {} ({})'.format(score.mean(), score.std()))
 
 

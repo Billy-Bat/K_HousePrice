@@ -41,7 +41,7 @@ def pd_one_hot_encoder(Data) :
     cols = Data.columns
     Ohe_df = pd.DataFrame(index=Data.index, columns=None)
     for col in Data.columns :
-        one_hot = pd.get_dummies(Data[col])
+        one_hot = pd.get_dummies(Data[col], prefix=col)
         Ohe_df = pd.concat((Ohe_df, one_hot), axis='columns')
 
     return Ohe_df
